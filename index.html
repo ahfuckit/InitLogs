@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>InitLogs – In‑Page Observability for Web Apps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="InitLogs gives you real-time, in-page observability for modern web apps: interactions, performance, network, errors, and logs."
+  />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-alt: #0b1020;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --danger: #f97373;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      --max-width: 1040px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #111827 0, #020617 55%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    header {
+      border-bottom: 1px solid rgba(31, 41, 55, 0.7);
+      backdrop-filter: blur(10px);
+      background: linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0.9),
+        rgba(15, 23, 42, 0.6),
+        transparent
+      );
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .logo-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 20%, #60a5fa, #1d4ed8);
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      inset: 6px 5px;
+      border-radius: 5px;
+      border: 2px solid rgba(15, 23, 42, 0.8);
+      border-top-color: rgba(15, 23, 42, 0.2);
+    }
+
+    .logo-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .nav-links a.nav-link {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid transparent;
+    }
+
+    .nav-links a.nav-link:hover {
+      color: #e5e7eb;
+      border-bottom-color: rgba(148, 163, 184, 0.6);
+    }
+
+    .nav-cta {
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.1);
+      color: #dbeafe;
+      border: 1px solid rgba(59, 130, 246, 0.7);
+      font-size: 0.85rem;
+    }
+
+    .nav-cta:hover {
+      background: rgba(37, 99, 235, 0.25);
+    }
+
+    main {
+      flex: 1;
+    }
+
+    .hero {
+      padding: 3.5rem 0 3rem;
+    }
+
+    .hero-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.4fr);
+      gap: 3rem;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero-inner {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2.5rem;
+      }
+    }
+
+    .hero-kicker {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2.2rem, 4vw, 2.9rem);
+      line-height: 1.1;
+      margin-bottom: 1.1rem;
+    }
+
+    .hero-title span.highlight {
+      background: linear-gradient(to right, #60a5fa, #a855f7);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 32rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.75rem 1.4rem;
+      font-size: 0.95rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      background: transparent;
+      color: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(to right, #2563eb, #7c3aed);
+      color: #f9fafb;
+      border-color: rgba(59, 130, 246, 0.6);
+      box-shadow: 0 12px 32px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-secondary {
+      border-color: rgba(148, 163, 184, 0.35);
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(156, 163, 175, 0.8);
+      color: #e5e7eb;
+    }
+
+    .hero-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .hero-note span {
+      color: #bfdbfe;
+    }
+
+    .hero-visual {
+      position: relative;
+      padding: 1.6rem;
+      border-radius: 1.5rem;
+      background: radial-gradient(circle at top left, #1d283a, #020617);
+      border: 1px solid rgba(30, 64, 175, 0.8);
+      box-shadow:
+        0 25px 60px rgba(15, 23, 42, 0.95),
+        0 0 40px rgba(37, 99, 235, 0.35);
+      overflow: hidden;
+    }
+
+    .hero-visual-title {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hero-visual-label {
+      font-size: 0.76rem;
+      color: #9ca3af;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .panel {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 1rem;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      font-size: 0.75rem;
+      color: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.4rem 0.75rem;
+      border-bottom: 1px solid rgba(55, 65, 81, 0.8);
+      background: linear-gradient(
+        to right,
+        rgba(15, 23, 42, 0.95),
+        rgba(30, 64, 175, 0.55)
+      );
+    }
+
+    .dots {
+      display: flex;
+      gap: 0.3rem;
+      align-items: center;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+
+    .dot.red {
+      background: #f87171;
+    }
+
+    .dot.yellow {
+      background: #facc15;
+    }
+
+    .dot.green {
+      background: #4ade80;
+    }
+
+    .panel-title {
+      font-size: 0.8rem;
+      color: #e5e7eb;
+    }
+
+    .panel-body {
+      max-height: 260px;
+      overflow: hidden;
+      padding: 0.6rem 0.75rem 0.9rem;
+      background: radial-gradient(circle at top, #020617 0, #020617 45%);
+    }
+
+    .log-line {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.18rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    }
+
+    .log-time {
+      color: #6b7280;
+      min-width: 50px;
+    }
+
+    .log-tag {
+      text-transform: uppercase;
+      font-size: 0.68em;
+      padding: 0.08rem 0.35rem;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      align-self: center;
+    }
+
+    .log-tag.info {
+      color: #93c5fd;
+      border-color: rgba(147, 197, 253, 0.4);
+    }
+
+    .log-tag.warn {
+      color: #facc15;
+      border-color: rgba(250, 204, 21, 0.5);
+    }
+
+    .log-tag.error {
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.6);
+    }
+
+    .log-text {
+      color: #e5e7eb;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.7);
+      background: radial-gradient(circle at top left, #111827, #020617);
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      padding: 0.05rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: rgba(59, 130, 246, 0.2);
+      color: #bfdbfe;
+    }
+
+    section {
+      padding: 3rem 0 2.6rem;
+    }
+
+    .section-header {
+      text-align: left;
+      max-width: 40rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .section-kicker {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .columns-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem;
+    }
+
+    @media (max-width: 800px) {
+      .columns-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.4rem;
+    }
+
+    .feature-card {
+      padding: 1rem;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: radial-gradient(circle at top left, #020617, #020617);
+    }
+
+    .feature-title {
+      font-size: 0.98rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .feature-text {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      margin-bottom: 0.7rem;
+    }
+
+    .pill strong {
+      color: #e5e7eb;
+      margin-right: 0.25rem;
+    }
+
+    .persona {
+      padding: 1rem;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: radial-gradient(circle at top left, #020617, #020617);
+      font-size: 0.9rem;
+    }
+
+    .persona h4 {
+      margin: 0 0 0.35rem;
+      font-size: 0.95rem;
+    }
+
+    .persona p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.4rem;
+    }
+
+    .pricing-card {
+      padding: 1.1rem;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: radial-gradient(circle at top left, #020617, #020617);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    .pricing-name {
+      font-weight: 600;
+    }
+
+    .pricing-price {
+      font-size: 1.05rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .pricing-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0.4rem 0 0;
+    }
+
+    .pricing-features li {
+      margin-bottom: 0.25rem;
+      color: var(--muted);
+    }
+
+    .pricing-features li::before {
+      content: "• ";
+      color: #60a5fa;
+    }
+
+    .panel-shortcut {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.4rem;
+    }
+
+    .kbd {
+      border-radius: 0.25rem;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      padding: 0.05rem 0.3rem;
+      font-size: 0.76rem;
+      background: rgba(15, 23, 42, 0.9);
+      color: #d1d5db;
+    }
+
+    footer {
+      border-top: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 1.5rem 0 1.8rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-right a {
+      color: var(--muted);
+    }
+
+    .footer-right a:hover {
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="container">
+        <nav class="nav">
+          <div class="logo">
+            <div class="logo-mark"></div>
+            <div>
+              <div>InitLogs</div>
+              <div class="logo-sub">In‑page observability for web apps</div>
+            </div>
+          </div>
+          <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#how-it-works" class="nav-link">How It Works</a>
+            <a href="#pricing" class="nav-link">Pricing</a>
+            <a href="#cta" class="nav-cta">Get Early Access</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="container hero-inner">
+          <div>
+            <div class="hero-kicker">Client‑side observability</div>
+            <h1 class="hero-title">
+              Real‑time <span class="highlight">in‑page observability</span> for modern web apps
+            </h1>
+            <p class="hero-subtitle">
+              InitLogs gives you instant visibility into what your application is doing — interactions,
+              performance, network activity, errors, and logs — all captured and displayed directly
+              inside the browser with zero dependencies.
+            </p>
+
+            <div class="hero-ctas" id="cta">
+              <button class="btn btn-primary">Get Early Access</button>
+              <button class="btn btn-secondary">View Demo (coming soon)</button>
+            </div>
+
+            <p class="hero-note">
+              No backend required. No build step. Just drop it in. <span>Press Ctrl + Shift + L to open the panel.</span>
+            </p>
+
+            <div class="badge">
+              <span class="badge-pill">Zero dependencies</span>
+              <span>Works in dev, staging, and production.</span>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <div class="hero-visual-title">
+              <span>InitLogs Panel</span>
+              <span class="hero-visual-label">In‑page observability</span>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="dots">
+                  <div class="dot red"></div>
+                  <div class="dot yellow"></div>
+                  <div class="dot green"></div>
+                </div>
+                <div class="panel-title">Session #42 · /checkout</div>
+              </div>
+              <div class="panel-body">
+                <div class="log-line">
+                  <span class="log-time">12:03:14</span>
+                  <span class="log-tag info">INFO</span>
+                  <span class="log-text">User clicked <strong>&lt;button&gt;Place order&lt;/button&gt;</strong></span>
+                </div>
+                <div class="log-line">
+                  <span class="log-time">12:03:14</span>
+                  <span class="log-tag info">XHR</span>
+                  <span class="log-text">POST /api/checkout <span style="color:#93c5fd;">200 · 238ms</span></span>
+                </div>
+                <div class="log-line">
+                  <span class="log-time">12:03:15</span>
+                  <span class="log-tag warn">CLS</span>
+                  <span class="log-text">Layout shift score <span style="color:#facc15;">0.17</span> on confirmation step</span>
+                </div>
+                <div class="log-line">
+                  <span class="log-time">12:03:15</span>
+                  <span class="log-tag error">ERROR</span>
+                  <span class="log-text">Unhandled promise rejection: <span style="color:#fca5a5;">PaymentProviderTimeoutError</span></span>
+                </div>
+                <div class="log-line">
+                  <span class="log-time">12:03:16</span>
+                  <span class="log-tag info">LOG</span>
+                  <span class="log-text">InitLogs: retrying /api/checkout with backoff</span>
+                </div>
+              </div>
+            </div>
+            <div class="panel-shortcut">
+              Open panel with <span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> +
+              <span class="kbd">L</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Problem / Solution -->
+      <section>
+        <div class="container">
+          <div class="columns-2">
+            <div>
+              <div class="section-header">
+                <div class="section-kicker">The Problem</div>
+                <h2 class="section-title">
+                  Debugging production web apps shouldn’t feel like guesswork
+                </h2>
+                <p class="section-subtitle">
+                  DevTools isn’t available to QA, support, or non‑technical users. RUM tools send
+                  data to dashboards, but don’t show what’s happening <em>right now</em>. Console logs
+                  vanish on refresh. Network issues and performance problems hide between tools.
+                </p>
+              </div>
+            </div>
+            <div>
+              <div class="section-header">
+                <div class="section-kicker">The Solution</div>
+                <h2 class="section-title">
+                  Observability that lives inside your app
+                </h2>
+                <p class="section-subtitle">
+                  InitLogs is a lightweight, zero‑dependency observability panel that runs directly in
+                  the browser. It captures everything happening inside your application and displays it
+                  in a clean, powerful UI that anyone can open.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section id="features">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-kicker">Features</div>
+            <h2 class="section-title">A debugging superpower — built for real teams</h2>
+            <p class="section-subtitle">
+              InitLogs combines deep browser instrumentation with an in‑page UI, so you can see
+              interactions, logs, errors, network, and performance in one place — without leaving
+              your app.
+            </p>
+          </div>
+
+          <div class="feature-list">
+            <div class="feature-card">
+              <div class="feature-title">In‑page log panel</div>
+              <div class="feature-text">
+                Open with a hotkey. View everything happening inside the app — interactions, logs,
+                errors, and more. No DevTools required.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Console interception</div>
+              <div class="feature-text">
+                Capture <code>console.log</code>, <code>warn</code>, <code>error</code>, and more —
+                preserved in the panel and still visible in the native console.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Network instrumentation</div>
+              <div class="feature-text">
+                See every request and response: fetch, XHR, WebSocket, and sendBeacon — with timing,
+                status codes, and errors.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Performance insights</div>
+              <div class="feature-text">
+                Track layout shifts, long tasks, paint events, LCP, INP, and other key performance
+                signals directly in the page.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Error tracking</div>
+              <div class="feature-text">
+                Capture exceptions, stack traces, and unhandled rejections instantly, linked to the
+                session where they occurred.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Session grouping</div>
+              <div class="feature-text">
+                Events are automatically grouped into meaningful interaction sessions so you can see
+                every step a user took.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Zero dependencies</div>
+              <div class="feature-text">
+                No frameworks. No build step. No external libraries. Just drop InitLogs into your page
+                and start observing.
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-title">Optional forwarding</div>
+              <div class="feature-text">
+                Forward logs to your extension, backend, or custom handler for storage, analysis, or
+                integration with other tools.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Who It's For -->
+      <section>
+        <div class="container">
+          <div class="section-header">
+            <div class="section-kicker">Who It’s For</div>
+            <h2 class="section-title">Built for the people who actually debug apps</h2>
+            <p class="section-subtitle">
+              InitLogs fits naturally into your existing workflow — whether you’re building, testing,
+              supporting, or operating complex web applications.
+            </p>
+          </div>
+
+          <div class="columns-2">
+            <div class="persona">
+              <h4>Frontend developers</h4>
+              <p>
+                See exactly what your code is doing in real time. Trace interactions, logs, and
+                network calls without juggling tools or reproducing obscure bugs from memory.
+              </p>
+            </div>
+            <div class="persona">
+              <h4>QA & test engineers</h4>
+              <p>
+                Capture rich context — logs, requests, errors — without ever opening DevTools. Attach
+                real sessions to bug reports and stop guessing what happened.
+              </p>
+            </div>
+            <div class="persona">
+              <h4>Support & ops teams</h4>
+              <p>
+                Diagnose customer issues with live insight into what the browser sees: errors, slow
+                calls, and broken flows, all tied to a real session.
+              </p>
+            </div>
+            <div class="persona">
+              <h4>Internal product & enterprise teams</h4>
+              <p>
+                Add observability to your internal tools without adding infrastructure. InitLogs runs
+                where your app runs — dev, staging, and production.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works -->
+      <section id="how-it-works">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-kicker">How It Works</div>
+            <h2 class="section-title">Drop it in. Open the panel. See everything.</h2>
+            <p class="section-subtitle">
+              InitLogs is intentionally simple to adopt. You don’t need to refactor your app, set up a
+              backend, or learn a new framework.
+            </p>
+          </div>
+
+          <div class="columns-2">
+            <div>
+              <div class="pill"><strong>1.</strong> Add the InitLogs script to your app</div>
+              <p class="section-subtitle">
+                Include InitLogs via a script tag or bundler. It initializes itself quietly, instruments
+                the browser, and waits in the background until you open it.
+              </p>
+
+              <div class="pill"><strong>2.</strong> Open the panel with a hotkey</div>
+              <p class="section-subtitle">
+                Press <span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> +
+                <span class="kbd">L</span>. The InitLogs panel slides in and starts streaming events in
+                real time — interactions, logs, errors, network, and more.
+              </p>
+
+              <div class="pill"><strong>3.</strong> Inspect, export, or forward</div>
+              <p class="section-subtitle">
+                Filter and inspect events in‑page, export them for debugging, or forward them to your
+                own systems for storage and analysis.
+              </p>
+            </div>
+
+            <div>
+              <div class="feature-card">
+                <div class="feature-title">Works where your users are</div>
+                <div class="feature-text">
+                  InitLogs runs wherever your app runs: on localhost, in staging, in production, and
+                  even on customer machines — without requiring them to install anything.
+                </div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-title">No backend required</div>
+                <div class="feature-text">
+                  By default, everything stays in the browser. Use it as a local debugging superpower,
+                  or opt‑in to forwarding when you’re ready.
+                </div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-title">Plays well with your stack</div>
+                <div class="feature-text">
+                  InitLogs is framework‑agnostic. React, Vue, Svelte, vanilla — if it runs in a
+                  browser, InitLogs can observe it.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pricing -->
+      <section id="pricing">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-kicker">Pricing</div>
+            <h2 class="section-title">Start simple. Grow when you’re ready.</h2>
+            <p class="section-subtitle">
+              InitLogs is designed to be useful from day one — even without an account or backend.
+              Upgrade only when you need collaboration and remote ingestion.
+            </p>
+          </div>
+
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <div class="pricing-name">Free</div>
+              <div class="pricing-price">$0</div>
+              <div class="pricing-note">For local debugging and solo developers.</div>
+              <ul class="pricing-features">
+                <li>In‑page panel</li>
+                <li>Local logs & events</li>
+                <li>Interaction sessions</li>
+                <li>Performance metrics</li>
+                <li>Network tracing</li>
+              </ul>
+            </div>
+
+            <div class="pricing-card">
+              <div class="pricing-name">Pro <span style="color:#60a5fa;">(Coming Soon)</span></div>
+              <div class="pricing-price">TBD / month</div>
+              <div class="pricing-note">For teams that need collaboration and remote visibility.</div>
+              <ul class="pricing-features">
+                <li>Everything in Free</li>
+                <li>Remote log forwarding</li>
+                <li>Team workspaces</li>
+                <li>Advanced filtering & search</li>
+                <li>Extended retention</li>
+                <li>Custom event hooks</li>
+              </ul>
+            </div>
+
+            <div class="pricing-card">
+              <div class="pricing-name">Enterprise</div>
+              <div class="pricing-price">Talk to us</div>
+              <div class="pricing-note">For organizations with strict data and security needs.</div>
+              <ul class="pricing-features">
+                <li>On‑prem or private cloud deployment</li>
+                <li>SSO / SAML integration</li>
+                <li>Custom integrations</li>
+                <li>Compliance & data retention options</li>
+                <li>Priority support and SLAs</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final CTA -->
+      <section>
+        <div class="container">
+          <div class="section-header">
+            <div class="section-kicker">Get Started</div>
+            <h2 class="section-title">Bring observability directly into your browser</h2>
+            <p class="section-subtitle">
+              InitLogs gives you the clarity you’ve always wanted — without dashboards, agents, or
+              complexity. Start with the in‑page panel and grow into remote ingestion only if and when
+              you need it.
+            </p>
+          </div>
+
+          <div class="hero-ctas">
+            <button class="btn btn-primary">Get Early Access</button>
+            <button class="btn btn-secondary">Join the waitlist</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container footer-inner">
+        <div>© 2026 Chris Singendonk All rights reserved.</div>
+        <div class="footer-right">
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#how-it-works">How It Works</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
