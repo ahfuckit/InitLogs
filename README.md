@@ -1,3 +1,5 @@
+See the demo and its source code at https://www.initlogs.com
+
 # What InitLogs is
 
 InitLogs treats the browser as:
